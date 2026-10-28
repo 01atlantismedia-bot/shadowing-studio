@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shadowing Studio</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2230;--mute:#6b7487;--line:#e3e6ec;--accent:#4f46e5;--hl:#fde68a;--hlink:#1c2230;--rec:#dc2626;--ok:#16a34a}
+@media (prefers-color-scheme:dark){:root{--bg:#12151c;--card:#1b2029;--ink:#e8ebf2;--mute:#8d96a8;--line:#2a3140;--accent:#818cf8;--hl:#7c5e10;--hlink:#fff;--rec:#f87171;--ok:#4ade80}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card);display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+header h1{font-size:18px;margin:0}
+#stats{font-size:14px;color:var(--mute)}
+#stats b{color:var(--ink)}
+main{display:grid;grid-template-columns:minmax(300px,1fr) minmax(340px,1.2fr);gap:16px;padding:16px;max-width:1300px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+input[type=text],input[type=number],textarea,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input[type=number]{width:70px}
+select{width:auto}
+textarea{min-height:90px;resize:vertical;font-size:14px;margin-top:8px}
+button{font:inherit;padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){border-color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.rec{background:var(--rec);color:#fff;border-color:var(--rec)}
+button.small{padding:4px 9px;font-size:13px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.tabs button{border-radius:8px}
+.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+#ytwrap{aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden;display:none}
+#ytwrap iframe{width:100%;height:100%}
+video#media{width:100%;border-radius:8px;background:#000;display:none;max-height:340px}
+.hint{color:var(--mute);font-size:13px}
+#msg{color:var(--rec);font-size:14px;margin-bottom:6px}
+#msg:empty{display:none}
+#autoStatus{font-size:14px;font-weight:600;color:var(--accent)}
+#transcript{max-height:60vh;overflow:auto}
+.line{display:flex;gap:8px;padding:8px;border-radius:8px;border:1px solid transparent;align-items:flex-start}
+.line.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.line .t{flex:none;min-width:52px;font-size:12px;color:var(--mute);cursor:pointer;padding-top:3px;text-align:center;line-height:1.3}
+.line .t:hover{color:var(--accent)}
+.line .t small{display:block;opacity:.7}
+.words{flex:1;line-height:1.9}
+.w{cursor:pointer;padding:1px 2px;border-radius:4px}
+.w:hover{outline:1px dashed var(--accent)}
+.w.hl{background:var(--hl);color:var(--hlink)}
+.hidetext .w{filter:blur(6px)}
+.blurline .line.active .w,.blurline #practiceLine{filter:blur(6px)}
+.blurline .line.active .words:hover .w,.blurline #practiceLine:hover{filter:none}
+.chip{display:inline-flex;gap:6px;align-items:center;background:var(--hl);color:var(--hlink);padding:3px 8px;border-radius:999px;margin:3px;font-size:14px}
+.chip a{color:inherit;font-size:12px}
+#practiceLine{font-size:18px;margin-bottom:6px}
+.seg{display:flex;gap:6px;margin-bottom:10px}
+.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.dots{display:flex;gap:6px;margin-bottom:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dot.done{background:var(--ok)}
+.dot.on{background:var(--accent);transform:scale(1.35)}
+.step h3{margin:4px 0;font-size:17px}
+.step p{margin:4px 0 8px}
+.scores button{width:42px}
+.takes{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.take{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;border-top:1px solid var(--line);padding-top:8px}
+.take audio{height:34px;flex:1;min-width:160px}
+.take a{color:var(--accent);font-size:13px}
+#banner{display:none;border-color:var(--accent)}
+.student .teacher,.student .solo{display:none!important}
+.people{display:grid;gap:8px;margin-top:10px}
+.person{text-align:left;width:100%}
+.person b{display:block}
+.person span{font-size:13px;color:var(--mute)}
+.person.on{border-color:var(--accent)}
+.vid{display:flex;gap:10px;align-items:center;cursor:pointer;padding:6px;border:1px solid var(--line);border-radius:8px;margin-top:6px}
+.vid:hover{border-color:var(--accent)}
+.vid img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:6px;flex:none;background:#000}
+.vid div{font-size:14px;line-height:1.3}
+.vid small{color:var(--mute);display:block}
+.student #banner{display:block}
+.teacher-link{display:none;font-size:13px;color:var(--mute)}
+.student .teacher-link{display:inline}
+#aOut{margin-top:8px}
+@media(max-width:860px){
+  main{display:flex;flex-direction:column;gap:0;padding:10px}
+  section{display:contents}
+  #banner{order:0}#cardLoad{order:1}#cardPick{order:1}#cardPlayer{order:2;position:sticky;top:0;z-index:20;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+  #cardPractice{order:3}#cardTranscript{order:4}#cardHl{order:5}#cardPaste{order:6}#cardAssign{order:7}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎧 Shadowing Studio</h1>
+  <div><span id="stats"></span> <a class="teacher-link" href="./">· open full tool</a></div>
+</header>
+
+<main>
+<section>
+  <div class="card" id="banner">
+    <h2>Your assignment</h2>
+    <div id="bTitle" style="font-weight:600"></div>
+    <div id="bNote" class="hint" style="white-space:pre-wrap"></div>
+  </div>
+
+  <div class="card teacher" id="cardLoad">
+    <h2>1 · Load a clip</h2>
+    <div class="tabs row" style="margin-top:0">
+      <button id="tabYt" class="on">YouTube link</button>
+      <button id="tabFile">Upload my own clip</button>
+    </div>
+    <div id="paneYt" class="row" style="margin-top:10px">
+      <input type="text" id="ytUrl" placeholder="Paste a YouTube link…" style="flex:1;min-width:200px">
+      <button class="primary" id="ytGo">Load</button>
+    </div>
+    <div id="paneFile" style="display:none">
+      <div class="row"><input type="file" id="fileIn" accept="audio/*,video/*"></div>
+      <p class="hint">Uploaded clips stay in the browser. Paste the transcript below (plain text, SRT or VTT). With plain text, press ⏱ on a line while the clip is at that point to stamp its start time.</p>
+    </div>
+  </div>
+
+  <div class="card solo" id="cardPick">
+    <h2>Not sure who to shadow?</h2>
+    <div class="seg" style="margin-bottom:6px">
+      <button id="acAm" class="on">American</button>
+      <button id="acBr">British</button>
+    </div>
+    <div class="seg" style="margin-bottom:0">
+      <button id="gM" class="on">Male voices</button>
+      <button id="gF">Female voices</button>
+    </div>
+    <div id="people" class="people"></div>
+    <div id="vids"></div>
+  </div>
+
+  <div class="card" id="cardPlayer">
+    <div id="msg"></div>
+    <div id="ytwrap"><div id="ytplayer"></div></div>
+    <video id="media" controls playsinline></video>
+    <div class="row">
+      <label class="hint">Speed
+        <select id="rate"><option value="0.5">0.5×</option><option value="0.75" selected>0.75×</option><option value="1">1×</option></select>
+      </label>
+      <label class="hint"><input type="checkbox" id="loop" checked> Loop line</label>
+      <button id="stopBtn" class="small">■ Stop</button>
+      <button id="autoBtn" class="small" title="Plays a line, pauses so you can repeat it, then moves to the next. Hands-free.">🔁 Repeat-after-me</button>
+    </div>
+    <div id="autoStatus" class="row"></div>
+  </div>
+
+  <div class="card teacher" id="cardPaste">
+    <h2>Transcript (paste / edit)</h2>
+    <textarea id="paste" placeholder="Paste transcript here: plain text (one sentence per line), SRT, or VTT"></textarea>
+    <div class="row"><button id="usePaste" class="primary">Use this transcript</button></div>
+  </div>
+
+  <div class="card teacher" id="cardAssign">
+    <h2>3 · Make a student link</h2>
+    <p class="hint" style="margin-top:0">For YouTube clips. Pick the lines students should practice (a 30–60 sec stretch works best). They open the link and everything is loaded, with no searching or pasting.</p>
+    <input type="text" id="aTitle" placeholder="Title (e.g. Week 3 – TED: Habits)">
+    <textarea id="aNote" placeholder="Note for students (e.g. Same clip for 5 days. Record on Day 1 and Day 5.)"></textarea>
+    <div class="row">
+      <label class="hint">From line <input type="number" id="aFrom" min="1" value="1"></label>
+      <label class="hint">to <input type="number" id="aTo" min="1"></label>
+      <label class="hint">Focus <select id="aFocus"></select></label>
+    </div>
+    <div class="row"><button class="primary" id="aMake">Create link</button></div>
+    <div id="aOut" style="display:none">
+      <input type="text" id="aUrl" readonly>
+      <div class="row"><button id="aCopy" class="small">Copy link</button><span class="hint" id="aWarn"></span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="card" id="cardPractice">
+    <h2><span>Practice</span>
+      <span class="hint">Focus this round
+        <select id="focus"></select>
+      </span>
+    </h2>
+    <div class="seg">
+      <button id="modeG" class="on">Guided</button>
+      <button id="modeF">Free</button>
+    </div>
+    <div id="practiceLine" class="hint">Tap a line in the transcript to begin.</div>
+
+    <div id="guide" class="step"></div>
+
+    <div id="free" style="display:none">
+      <div class="row">
+        <button id="playOrig" disabled>▶ Original</button>
+        <button id="recBtn" disabled>● Record</button>
+        <button id="compare" disabled>⇄ Original → Mine</button>
+      </div>
+    </div>
+    <div class="row">
+      <button id="cmpFirst" class="small" disabled>📈 First take vs latest</button>
+    </div>
+    <div class="hint" style="margin-top:6px">Use headphones so the mic doesn't pick up the original. Recordings are saved on this device.</div>
+    <div class="takes" id="takes"></div>
+  </div>
+
+  <div class="card" id="cardTranscript">
+    <h2><span>Transcript · tap words to highlight</span>
+      <label class="hint"><input type="checkbox" id="hideText"> Hide text</label>
+    </h2>
+    <div id="transcript"><div class="hint">Nothing loaded yet.</div></div>
+  </div>
+
+  <div class="card" id="cardHl">
+    <h2>My highlighted words</h2>
+    <div id="hlList" class="hint">None yet.</div>
+    <div class="row"><button id="copyHl" class="small" disabled>Copy list</button><button id="clearHl" class="small" disabled>Clear</button></div>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const DAILY_GOAL=5; // recordings per day
+const FOCI=['Stress','Linking','Intonation','Individual sounds','Rhythm / speed'];
+const S={kind:null,key:null,vid:null,lines:[],active:-1,hl:new Set(),yt:null,ytReady:false,pendingId:null,timer:null,
+  mr:null,stream:null,recording:false,focus:'Stress',step:0,mode:'guided',assign:null,auto:null,takes:[]};
+let segTok=0, autoTok=0;
+const urlCache=new Map();
+
+function h(tag,props,...kids){const e=document.createElement(tag);Object.assign(e,props||{});kids.flat().forEach(k=>e.append(k));return e;}
+const msg=t=>{$('msg').textContent=t||'';};
+
+/* ---------- localStorage ---------- */
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+function save(){ if(S.key) ls.set('shadow:'+S.key,{lines:S.lines,hl:[...S.hl]}); }
+
+/* ---------- IndexedDB for recordings ---------- */
+const DB={ok:false,db:null,mem:[],seq:1,
+  async init(){
+    try{ await new Promise((res,rej)=>{
+      const r=indexedDB.open('shadowing-studio',1);
+      r.onupgradeneeded=()=>{const s=r.result.createObjectStore('takes',{keyPath:'id',autoIncrement:true});s.createIndex('k','k');};
+      r.onsuccess=()=>{DB.db=r.result;DB.ok=true;res();};
+      r.onerror=()=>rej(r.error);
+    }); }catch(e){DB.ok=false;}
+  },
+  add(rec){
+    if(!DB.ok){rec.id=DB.seq++;DB.mem.push(rec);return Promise.resolve();}
+    return new Promise((res,rej)=>{const t=DB.db.transaction('takes','readwrite');t.objectStore('takes').add(rec);t.oncomplete=res;t.onerror=()=>rej(t.error);});
+  },
+  list(k){
+    if(!DB.ok) return Promise.resolve(DB.mem.filter(r=>r.k===k));
+    return new Promise((res,rej)=>{const q=DB.db.transaction('takes').objectStore('takes').index('k').getAll(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});
+  },
+  del(id){
+    if(!DB.ok){DB.mem=DB.mem.filter(r=>r.id!==id);return Promise.resolve();}
+    return new Promise((res,rej)=>{const t=DB.db.transaction('takes','readwrite');t.objectStore('takes').delete(id);t.oncomplete=res;t.onerror=()=>rej(t.error);});
+  }
+};
+const takeKey=line=>S.key+'|'+line;
+function urlFor(t){ if(!urlCache.has(t.id)) urlCache.set(t.id,URL.createObjectURL(t.blob)); return urlCache.get(t.id); }
+
+/* ---------- stats / streak ---------- */
+const todayStr=()=>new Date().toLocaleDateString('en-CA');
+function bump(){ const st=ls.get('shadow:stats',{days:{}}); const d=todayStr(); st.days[d]=(st.days[d]||0)+1; ls.set('shadow:stats',st); updStats(); }
+function updStats(){
+  const st=ls.get('shadow:stats',{days:{}}); const n=st.days[todayStr()]||0;
+  let streak=0; const d=new Date(); if(!st.days[todayStr()]) d.setDate(d.getDate()-1);
+  while(st.days[d.toLocaleDateString('en-CA')]){streak++;d.setDate(d.getDate()-1);}
+  $('stats').innerHTML='🔥 <b>'+streak+'</b> day streak · Today <b>'+n+'/'+DAILY_GOAL+'</b> recordings'+(n>=DAILY_GOAL?' ✅':'');
+}
+
+/* ---------- player abstraction ---------- */
+const media=$('media');
+const P={
+  t(){return S.kind==='yt'?(S.yt&&S.yt.getCurrentTime?S.yt.getCurrentTime():0):media.currentTime;},
+  seek(t){try{S.kind==='yt'?S.yt.seekTo(t,true):(media.currentTime=t);}catch(e){}},
+  play(){try{S.kind==='yt'?S.yt.playVideo():media.play();}catch(e){}},
+  pause(){try{S.kind==='yt'?S.yt.pauseVideo():media.pause();}catch(e){}},
+  rate(r){try{S.kind==='yt'?S.yt.setPlaybackRate(r):(media.playbackRate=r);}catch(e){}},
+  stop(){segTok++;clearInterval(S.timer);P.pause();},
+  seg(s,e,o){
+    o=o||{}; clearInterval(S.timer); const tok=++segTok;
+    P.rate(o.rate||parseFloat($('rate').value)); P.seek(s); P.play();
+    setTimeout(()=>{
+      if(tok!==segTok) return;
+      S.timer=setInterval(()=>{
+        if(P.t()>=e-0.05){
+          if(o.loop){P.seek(s);}
+          else{clearInterval(S.timer);P.pause();o.cb&&o.cb();}
+        }
+      },80);
+    },350);
+  }
+};
+function segEnd(i){
+  const l=S.lines[i]; if(l.start==null) return null;
+  if(l.end!=null) return l.end;
+  for(let j=i+1;j<S.lines.length;j++) if(S.lines[j].start!=null) return S.lines[j].start;
+  return l.start+7;
+}
+function playOrig(o){
+  const l=S.lines[S.active]; if(!l||l.start==null||!S.kind) return;
+  o=Object.assign({loop:$('loop').checked},o||{});
+  P.seg(l.start,segEnd(S.active),o);
+}
+function stopAll(){ stopAuto(); P.stop(); }
+$('rate').onchange=()=>{ if(S.kind) P.rate(parseFloat($('rate').value)); };
+$('stopBtn').onclick=()=>{ if(S.kind) stopAll(); };
+
+/* ---------- YouTube ---------- */
+window.onYouTubeIframeAPIReady=function(){ S.ytReady=true; if(S.pendingId) mountYt(S.pendingId); };
+function mountYt(id){
+  $('ytwrap').style.display='block'; media.style.display='none';
+  if(S.yt&&S.yt.cueVideoById){ S.yt.cueVideoById(id); return; }
+  S.yt=new YT.Player('ytplayer',{videoId:id,playerVars:{playsinline:1,rel:0},events:{
+    onError:()=>msg("YouTube won't play this video here (embedding may be disabled). Try another clip.")
+  }});
+}
+function useYt(id){
+  S.kind='yt'; S.vid=id;
+  if(S.ytReady||(window.YT&&YT.Player)){S.ytReady=true;mountYt(id);} else S.pendingId=id;
+}
+const ytId=u=>{const m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);return m?m[1]:null;};
+
+function resetState(){ stopAll(); S.active=-1; S.step=0; S.takes=[]; S.assign=null; document.body.classList.remove('student'); }
+
+$('ytGo').onclick=()=>{
+  const id=ytId($('ytUrl').value.trim());
+  if(!id){ msg("That doesn't look like a YouTube link."); return; }
+  loadYoutube(id);
+};
+async function loadYoutube(id){
+  msg(''); resetState(); S.key='yt-'+id; useYt(id);
+  const saved=ls.get('shadow:'+S.key,null);
+  if(saved){ S.lines=saved.lines; S.hl=new Set(saved.hl); render(); return; }
+  S.lines=[]; S.hl=new Set(); render();
+  msg('Fetching captions…');
+  try{
+    const r=await fetch('/.netlify/functions/transcript?id='+id);
+    const d=await r.json();
+    if(!r.ok||!d.items||!d.items.length) throw new Error(d.error||'No captions found');
+    S.lines=d.items.map(i=>({start:i.start,text:i.text.replace(/\s+/g,' ').trim()})).filter(l=>l.text);
+    msg(''); save(); render();
+  }catch(e){
+    msg("Couldn't fetch captions automatically ("+e.message+"). Paste a transcript instead — SRT/VTT gives you timestamps.");
+  }
+}
+
+/* ---------- file upload ---------- */
+$('fileIn').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  resetState(); if(S.yt&&S.yt.pauseVideo) try{S.yt.pauseVideo();}catch(_){}
+  S.kind='file'; S.vid=null; S.key='file-'+f.name+'-'+f.size;
+  media.src=URL.createObjectURL(f); media.style.display='block'; $('ytwrap').style.display='none';
+  const saved=ls.get('shadow:'+S.key,null);
+  if(saved){S.lines=saved.lines;S.hl=new Set(saved.hl);}else{S.lines=[];S.hl=new Set();}
+  msg(''); render();
+};
+
+/* ---------- tabs ---------- */
+function tab(w){
+  $('tabYt').classList.toggle('on',w==='yt'); $('tabFile').classList.toggle('on',w==='file');
+  $('paneYt').style.display=w==='yt'?'flex':'none'; $('paneFile').style.display=w==='file'?'block':'none';
+}
+$('tabYt').onclick=()=>tab('yt'); $('tabFile').onclick=()=>tab('file');
+
+/* ---------- transcript parsing ---------- */
+function ts(s){const p=s.replace(',','.').split(':').map(parseFloat);return p.length===3?p[0]*3600+p[1]*60+p[2]:p[0]*60+p[1];}
+function parse(txt){
+  txt=txt.replace(/\r/g,'').trim(); if(!txt) return [];
+  if(/-->/.test(txt)){
+    const out=[];
+    for(const b of txt.split(/\n\s*\n/)){
+      const ls_=b.split('\n'); const i=ls_.findIndex(l=>/-->/.test(l)); if(i<0) continue;
+      const m=ls_[i].match(/([\d:.,]+)\s*-->/); if(!m) continue;
+      const text=ls_.slice(i+1).join(' ').replace(/<[^>]+>/g,'').trim();
+      if(text) out.push({start:ts(m[1]),text});
+    }
+    return out;
+  }
+  let lines=txt.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length<3) lines=txt.replace(/\n/g,' ').split(/(?<=[.!?])\s+/).filter(Boolean);
+  return lines.map(l=>{const m=l.match(/^\[?(\d{1,2}:\d{2}(?::\d{2})?)\]?\s+(.*)$/);return m?{start:ts(m[1]),text:m[2]}:{start:null,text:l};});
+}
+$('usePaste').onclick=()=>{
+  const l=parse($('paste').value);
+  if(!l.length){msg('Paste something first.');return;}
+  if(!S.kind){msg('Load a YouTube link or upload a clip first.');return;}
+  msg(''); S.lines=l; S.hl=new Set(); S.active=-1; save(); render();
+};
+
+/* ---------- rendering ---------- */
+const fmt=t=>{const m=Math.floor(t/60),s=Math.floor(t%60);return m+':'+String(s).padStart(2,'0');};
+function render(){
+  const box=$('transcript'); box.innerHTML='';
+  $('aTo').value=S.lines.length||'';
+  if(!S.lines.length){box.innerHTML='<div class="hint">Nothing loaded yet.</div>';renderHl();renderPractice();return;}
+  S.lines.forEach((l,i)=>{
+    const d=h('div',{className:'line'+(i===S.active?' active':''),id:'line'+i});
+    const t=h('div',{className:'t'});
+    if(l.start!=null){ t.append('▶ '+fmt(l.start)); t.append(h('small',{textContent:'#'+(i+1)})); t.title='Play this line'; t.onclick=()=>select(i,true); }
+    else { t.append('⏱ set'); t.append(h('small',{textContent:'#'+(i+1)})); t.title="Stamp the clip's current time as this line's start"; t.onclick=()=>{ if(!S.kind) return; l.start=P.t(); save(); render(); }; }
+    const w=h('div',{className:'words'});
+    l.text.split(/\s+/).forEach((word,j)=>{
+      const sp=h('span',{className:'w'+(S.hl.has(i+':'+j)?' hl':''),textContent:word});
+      sp.onclick=ev=>{ev.stopPropagation();const k=i+':'+j;S.hl.has(k)?S.hl.delete(k):S.hl.add(k);sp.classList.toggle('hl');save();renderHl();};
+      w.append(sp,' ');
+    });
+    d.append(t,w);
+    d.onclick=e=>{ if(e.target===d||e.target===w) select(i,false); };
+    box.append(d);
+  });
+  renderHl(); renderPractice();
+}
+function renderHl(){
+  const box=$('hlList');
+  const items=[...S.hl].map(k=>{const [i,j]=k.split(':').map(Number);const l=S.lines[i];return l?{i,j,w:l.text.split(/\s+/)[j]}:null;}).filter(Boolean).sort((a,b)=>a.i-b.i||a.j-b.j);
+  $('copyHl').disabled=$('clearHl').disabled=!items.length;
+  if(!items.length){box.className='hint';box.textContent='None yet. Tap words above to collect the ones you want to practice.';return;}
+  box.className=''; box.innerHTML='';
+  items.forEach(it=>{
+    const clean=(it.w||'').replace(/[^\p{L}'’-]/gu,'');
+    const c=h('span',{className:'chip'}); c.append(it.w+' ');
+    c.append(h('a',{href:'https://youglish.com/pronounce/'+encodeURIComponent(clean)+'/english',target:'_blank',rel:'noopener',textContent:'YouGlish ↗'}));
+    box.append(c);
+  });
+}
+$('copyHl').onclick=()=>{const t=[...S.hl].map(k=>{const [i,j]=k.split(':').map(Number);return S.lines[i]&&S.lines[i].text.split(/\s+/)[j];}).filter(Boolean).join('\n');if(navigator.clipboard)navigator.clipboard.writeText(t);};
+$('clearHl').onclick=()=>{S.hl=new Set();save();render();};
+$('hideText').onchange=e=>$('transcript').classList.toggle('hidetext',e.target.checked);
+
+/* ---------- selecting a line ---------- */
+function select(i,play,fromAuto){
+  if(!fromAuto&&S.auto) stopAuto();
+  S.active=i; S.step=0; S.takes=[];
+  document.querySelectorAll('.line').forEach(el=>el.classList.remove('active'));
+  const el=$('line'+i); if(el){el.classList.add('active');el.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  renderPractice();
+  if(play) playOrig();
+}
+
+/* ---------- guided steps ---------- */
+const STEPS=[
+  {t:'Listen',audio:true,act:'▶ Play',d:()=>"Just listen and understand the meaning. Don't speak yet.",run:()=>playOrig({rate:1,loop:false})},
+  {t:'Mark',audio:true,act:'▶ Play again',d:()=>'Read the line. Tap the words that are hard or stressed (they turn yellow), then listen again.',run:()=>playOrig({rate:1,loop:false})},
+  {t:'Shadow with text',audio:true,act:'▶ Play (loops)',d:()=>'Speak along, about half a second behind. This round: '+S.focus+'.',run:()=>playOrig({rate:0.75,loop:true})},
+  {t:'Shadow without text',audio:true,hide:true,act:'▶ Play (loops)',d:()=>'Text is hidden. Same thing at full speed. Focus: '+S.focus+'. (Hover or tap the text to peek.)',run:()=>playOrig({rate:1,loop:true})},
+  {t:'Record',act:'● Record',d:()=>'Record your best take. Focus: '+S.focus+'. Headphones in!',run:()=>toggleRec()},
+  {t:'Compare',audio:true,act:'⇄ Original → Mine',d:()=>'Listen to the original, then your take. Only check one thing: '+S.focus+'. Did it match?',run:()=>compareLatest()},
+  {t:'Rate',rate:true,d:()=>'How close was your '+S.focus.toLowerCase()+' to the original?'}
+];
+function renderGuide(){
+  const box=$('guide'); const l=S.lines[S.active];
+  box.innerHTML='';
+  if(S.mode!=='guided'){document.body.classList.remove('blurline');return;}
+  if(!l){document.body.classList.remove('blurline');box.append(h('div',{className:'hint',textContent:'Tap a line in the transcript, then follow the steps.'}));return;}
+  const st=STEPS[S.step];
+  document.body.classList.toggle('blurline',!!st.hide);
+  const dots=h('div',{className:'dots'});
+  STEPS.forEach((s,i)=>dots.append(h('span',{className:'dot'+(i===S.step?' on':'')+(i<S.step?' done':''),title:s.t})));
+  box.append(dots,h('h3',{textContent:'Step '+(S.step+1)+'/'+STEPS.length+' · '+st.t}),h('p',{textContent:st.d()}));
+  const needsTs=st.audio&&l.start==null;
+  if(needsTs) box.append(h('div',{className:'hint',textContent:'This line has no timestamp yet. Press ⏱ set next to it while the clip is at that point.'}));
+  const act=h('div',{className:'row'});
+  if(st.rate){
+    const sc=h('div',{className:'scores row',style:''});
+    const prev=ls.get('shadow:ratings',[]).filter(r=>r.k===takeKey(S.active)).slice(-1)[0];
+    for(let n=1;n<=5;n++) sc.append(h('button',{textContent:String(n),onclick:()=>{
+      const rs=ls.get('shadow:ratings',[]); rs.push({k:takeKey(S.active),ts:Date.now(),f:S.focus,s:n}); ls.set('shadow:ratings',rs);
+      sc.replaceChildren(h('span',{textContent:'Saved ✓ ('+n+'/5)'}));
+    }}));
+    act.append(sc);
+    if(prev) act.append(h('div',{className:'hint',textContent:'Last time you rated this line '+prev.s+'/5.'}));
+  } else {
+    let label=st.act, disabled=needsTs;
+    if(S.step===4&&S.recording){label='■ Stop recording';}
+    if(S.step===5&&!S.takes.length){disabled=true;}
+    act.append(h('button',{className:'primary'+(S.step===4&&S.recording?' rec':''),textContent:label,disabled,onclick:st.run}));
+    if(S.step===5&&!S.takes.length) act.append(h('span',{className:'hint',textContent:'Record a take first.'}));
+  }
+  box.append(act);
+  const nav=h('div',{className:'row'});
+  nav.append(h('button',{className:'small',textContent:'← Back',disabled:S.step===0,onclick:()=>{stopAll();S.step--;renderGuide();}}));
+  if(S.step<STEPS.length-1){
+    nav.append(h('button',{className:'small',textContent:'Next →',onclick:()=>{stopAll();S.step++;renderGuide();}}));
+  } else {
+    nav.append(h('button',{className:'small primary',textContent:'Next line →',disabled:S.active>=S.lines.length-1,onclick:()=>{stopAll();select(S.active+1,false);}}));
+  }
+  box.append(nav);
+}
+function setMode(m){
+  S.mode=m; $('modeG').classList.toggle('on',m==='guided'); $('modeF').classList.toggle('on',m==='free');
+  $('free').style.display=m==='free'?'block':'none'; renderGuide();
+}
+$('modeG').onclick=()=>setMode('guided'); $('modeF').onclick=()=>setMode('free');
+
+/* ---------- practice panel ---------- */
+function renderPractice(){
+  const l=S.lines[S.active];
+  $('practiceLine').textContent=l?l.text:'Tap a line in the transcript to begin.';
+  $('practiceLine').className=l?'':'hint';
+  const canPlay=!!l&&l.start!=null;
+  $('playOrig').disabled=!canPlay; $('recBtn').disabled=!l;
+  syncRecBtn(); renderGuide(); renderTakes();
+}
+function syncRecBtn(){
+  const b=$('recBtn'); b.textContent=S.recording?'■ Stop recording':'● Record'; b.classList.toggle('rec',S.recording);
+}
+function syncCompare(){
+  const l=S.lines[S.active]; const canPlay=!!l&&l.start!=null;
+  $('compare').disabled=!(canPlay&&S.takes.length);
+  $('cmpFirst').disabled=S.takes.length<2;
+}
+async function renderTakes(){
+  const line=S.active, box=$('takes');
+  if(line<0){box.innerHTML='';S.takes=[];syncCompare();return;}
+  let list=[]; try{list=await DB.list(takeKey(line));}catch(e){}
+  if(S.active!==line) return;
+  list.sort((a,b)=>a.ts-b.ts); S.takes=list; box.innerHTML='';
+  if(!DB.ok) box.append(h('div',{className:'hint',textContent:'Private browsing detected: recordings will be lost when you close this tab.'}));
+  if(!list.length) box.append(h('div',{className:'hint',textContent:'No recordings of this line yet.'}));
+  list.forEach((t,n)=>{
+    const when=new Date(t.ts).toLocaleString([], {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const ext=(t.blob.type||'').includes('mp4')?'m4a':'webm';
+    const row=h('div',{className:'take'});
+    row.append('Take '+(n+1)+' · '+when);
+    row.append(h('audio',{controls:true,src:urlFor(t)}));
+    row.append(h('a',{href:urlFor(t),download:'take-'+(n+1)+'-line'+(line+1)+'.'+ext,textContent:'⬇ Save'}));
+    row.append(h('button',{className:'small',textContent:'✕',title:'Delete this take',onclick:async()=>{await DB.del(t.id);urlCache.delete(t.id);renderTakes();}}));
+    box.append(row);
+  });
+  syncCompare(); renderGuide();
+}
+
+/* ---------- recording ---------- */
+async function toggleRec(){
+  if(S.mr&&S.mr.state==='recording'){S.mr.stop();return;}
+  if(S.active<0) return;
+  if(!navigator.mediaDevices||!window.MediaRecorder){msg("This browser can't record audio. Try Chrome or Safari (up to date).");return;}
+  try{S.stream=await navigator.mediaDevices.getUserMedia({audio:true});}
+  catch(e){msg('Microphone blocked. Allow mic access in your browser settings (the site must be on HTTPS).');return;}
+  msg(''); stopAll();
+  const chunks=[], line=S.active, k=takeKey(line);
+  S.mr=new MediaRecorder(S.stream);
+  S.mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+  S.mr.onstop=async()=>{
+    S.stream.getTracks().forEach(t=>t.stop());
+    const blob=new Blob(chunks,{type:S.mr.mimeType||'audio/webm'});
+    S.recording=false;
+    try{await DB.add({k,blob,ts:Date.now()});bump();}catch(e){msg("Couldn't save the recording (storage full?).");}
+    if(S.active===line&&S.mode==='guided'&&S.step===4) S.step=5;
+    if(S.active===line) renderPractice(); else syncRecBtn();
+  };
+  S.mr.start(); S.recording=true; syncRecBtn(); renderGuide();
+}
+$('recBtn').onclick=toggleRec;
+$('playOrig').onclick=()=>playOrig();
+
+/* ---------- comparing ---------- */
+function playBlob(url){return new Promise(res=>{const a=new Audio(url);a.onended=res;a.onerror=res;a.play().catch(res);});}
+function compareLatest(){
+  const l=S.lines[S.active]; if(!l||l.start==null||!S.takes.length) return;
+  const latest=S.takes[S.takes.length-1];
+  playOrig({rate:1,loop:false,cb:()=>setTimeout(()=>playBlob(urlFor(latest)),300)});
+}
+$('compare').onclick=compareLatest;
+$('cmpFirst').onclick=async()=>{
+  if(S.takes.length<2) return; stopAll();
+  await playBlob(urlFor(S.takes[0])); await new Promise(r=>setTimeout(r,600)); await playBlob(urlFor(S.takes[S.takes.length-1]));
+};
+
+/* ---------- repeat-after-me (hands-free) ---------- */
+function stopAuto(){
+  if(!S.auto) return;
+  clearTimeout(S.auto.wait); S.auto=null; segTok++; clearInterval(S.timer); P.pause();
+  $('autoBtn').textContent='🔁 Repeat-after-me'; $('autoStatus').textContent='';
+}
+function runAuto(){
+  const a=S.auto; if(!a) return;
+  let i=a.i; while(i<S.lines.length&&S.lines[i].start==null) i++;
+  if(i>=S.lines.length){stopAuto();$('autoStatus').textContent='Finished 🎉';return;}
+  a.i=i; select(i,false,true);
+  const l=S.lines[i], e=segEnd(i), rate=parseFloat($('rate').value);
+  $('autoStatus').textContent='👂 Listen… ('+(i+1)+'/'+S.lines.length+')';
+  P.seg(l.start,e,{rate,loop:false,cb:()=>{
+    if(!S.auto||S.auto.tok!==a.tok) return;
+    $('autoStatus').textContent='🎤 Your turn: repeat it!';
+    a.wait=setTimeout(()=>{a.i=i+1;runAuto();},((e-l.start)/rate+1)*1000);
+  }});
+}
+$('autoBtn').onclick=()=>{
+  if(S.auto){stopAuto();return;}
+  if(!S.kind||!S.lines.length){msg('Load a clip with a transcript first.');return;}
+  stopAll(); S.auto={i:Math.max(S.active,0),tok:++autoTok};
+  $('autoBtn').textContent='■ Stop'; runAuto();
+};
+
+/* ---------- assignment links ---------- */
+function b64u(b){let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function unb64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b;}
+async function pipe(bytes,stream){const w=stream.writable.getWriter();w.write(bytes);w.close();return new Uint8Array(await new Response(stream.readable).arrayBuffer());}
+async function enc(obj){
+  const bytes=new TextEncoder().encode(JSON.stringify(obj));
+  if(window.CompressionStream) return 'c'+b64u(await pipe(bytes,new CompressionStream('deflate-raw')));
+  return 'p'+b64u(bytes);
+}
+async function dec(tok){
+  let bytes=unb64u(tok.slice(1));
+  if(tok[0]==='c') bytes=await pipe(bytes,new DecompressionStream('deflate-raw'));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+const hash=s=>{let x=5381;for(let i=0;i<s.length;i++)x=((x<<5)+x+s.charCodeAt(i))|0;return (x>>>0).toString(36);};
+
+$('aMake').onclick=async()=>{
+  if(S.kind!=='yt'||!S.vid||!S.lines.length){msg('Load a YouTube clip with a transcript first.');return;}
+  const from=Math.max(1,+$('aFrom').value||1), to=Math.min(S.lines.length,+$('aTo').value||S.lines.length);
+  if(to<from){msg('"To line" must be after "From line".');return;}
+  msg('');
+  const l=[]; for(let i=from-1;i<to;i++){const x=S.lines[i]; const e=segEnd(i); l.push([x.start==null?null:Math.round(x.start*100)/100,x.text,e==null?null:Math.round(e*100)/100]);}
+  const tok=await enc({v:S.vid,t:$('aTitle').value.trim(),n:$('aNote').value.trim(),f:$('aFocus').value,l});
+  const url=location.origin+location.pathname+'#a='+tok;
+  $('aOut').style.display='block'; $('aUrl').value=url;
+  $('aWarn').textContent=url.length>5000?'Long link ('+url.length+' chars). Some chat apps may cut it. Try fewer lines.':'';
+};
+$('aCopy').onclick=()=>{$('aUrl').select();if(navigator.clipboard)navigator.clipboard.writeText($('aUrl').value);$('aCopy').textContent='Copied ✓';setTimeout(()=>$('aCopy').textContent='Copy link',1500);};
+
+async function loadAssignment(tok){
+  try{
+    const a=await dec(tok);
+    if(!a||!a.v||!a.l) throw new Error('bad');
+    resetState(); S.assign=a; S.key='yt-'+a.v+'-a'+hash(tok);
+    S.lines=a.l.map(([s,t,e])=>({start:s,text:t,end:e==null?undefined:e}));
+    const saved=ls.get('shadow:'+S.key,null); S.hl=new Set(saved?saved.hl:[]);
+    if(a.f&&FOCI.includes(a.f)){S.focus=a.f;$('focus').value=a.f;}
+    document.body.classList.add('student');
+    $('bTitle').textContent=a.t||'Practice clip'; $('bNote').textContent=a.n||'';
+    useYt(a.v); render();
+  }catch(e){
+    document.body.classList.add('student');
+    msg('This assignment link looks broken. Ask your teacher for a new one.');
+  }
+}
+
+/* ---------- "who should I shadow?" recommendations ---------- */
+// Edit this list freely. Optional vids:[{id:'YOUTUBE_ID',title:'...'}] shows your own hand-picked interviews first.
+const PEOPLE={
+  american:{
+    male:[
+      {n:'Tom Hanks',d:'Warm, clear and usually steady. A good first choice.',vids:[]},
+      {n:'Morgan Freeman',d:'Deep voice, unhurried pace: easy to copy the rhythm.',vids:[]},
+      {n:'Chris Evans',d:'Relaxed, friendly, everyday casual speech.',vids:[]}],
+    female:[
+      {n:'Oprah Winfrey',d:'Very clear, with strong, expressive intonation.',vids:[]},
+      {n:'Anne Hathaway',d:'Polished and easy to follow.',vids:[]},
+      {n:'Emma Stone',d:'Lively and faster: try after you are comfortable.',vids:[]}]},
+  british:{
+    male:[
+      {n:'Tom Hiddleston',d:'Clear, polished southern British accent.',vids:[]},
+      {n:'Benedict Cumberbatch',d:'Precise, upper-class British. Can be fast.',vids:[]},
+      {n:'Hugh Grant',d:'Classic British, dry humour, natural speed.',vids:[]}],
+    female:[
+      {n:'Emma Watson',d:'Clear and measured. Often learner-friendly.',vids:[]},
+      {n:'Emma Thompson',d:'Warm, expressive British speech.',vids:[]},
+      {n:'Kate Winslet',d:'Natural, friendly, a little more casual.',vids:[]}]}
+};
+const pick={ac:'american',g:'male',who:null};
+function renderPeople(){
+  $('acAm').classList.toggle('on',pick.ac==='american'); $('acBr').classList.toggle('on',pick.ac==='british');
+  $('gM').classList.toggle('on',pick.g==='male'); $('gF').classList.toggle('on',pick.g==='female');
+  const box=$('people'); box.innerHTML='';
+  PEOPLE[pick.ac][pick.g].forEach(p=>{
+    const b=h('button',{className:'person'+(pick.who===p.n?' on':'')});
+    b.append(h('b',{textContent:p.n}),h('span',{textContent:p.d}));
+    b.onclick=()=>showVideos(p); box.append(b);
+  });
+}
+async function showVideos(p){
+  pick.who=p.n; renderPeople();
+  const box=$('vids'); box.innerHTML='';
+  const ytSearch='https://www.youtube.com/results?search_query='+encodeURIComponent(p.n+' interview');
+  const fallback=why=>{ box.append(h('div',{className:'hint',textContent:why+' '}),h('a',{href:ytSearch,target:'_blank',rel:'noopener',textContent:'Search YouTube for '+p.n+' interviews ↗'}),h('div',{className:'hint',textContent:'Copy a link, paste it in "Load a clip", and press Load.'})); };
+  let items=(p.vids||[]).map(v=>({id:v.id,title:v.title||p.n+' interview',channel:''}));
+  if(!items.length){
+    const ck='shadow:pick:'+p.n, cached=ls.get(ck,null);
+    if(cached&&Date.now()-cached.ts<6048e5) items=cached.items;
+    else{
+      box.append(h('div',{className:'hint',textContent:'Finding interviews…'}));
+      try{
+        const r=await fetch('/.netlify/functions/search?q='+encodeURIComponent(p.n+' interview'));
+        const d=await r.json();
+        if(!r.ok) throw new Error(d.error||'search failed');
+        items=d.items||[]; ls.set(ck,{ts:Date.now(),items});
+      }catch(e){ if(pick.who!==p.n) return; box.innerHTML=''; fallback("Couldn't list interviews automatically."); return; }
+    }
+  }
+  if(pick.who!==p.n) return;
+  box.innerHTML='';
+  if(!items.length){ fallback('No interviews found.'); return; }
+  items.forEach(v=>{
+    const row=h('div',{className:'vid'});
+    row.append(h('img',{src:'https://i.ytimg.com/vi/'+v.id+'/mqdefault.jpg',alt:'',loading:'lazy'}));
+    const t=h('div',{textContent:v.title}); if(v.channel) t.append(h('small',{textContent:v.channel})); row.append(t);
+    row.onclick=()=>{ $('ytUrl').value='https://www.youtube.com/watch?v='+v.id; loadYoutube(v.id); $('cardPlayer').scrollIntoView({behavior:'smooth',block:'start'}); };
+    box.append(row);
+  });
+  box.append(h('div',{className:'hint',style:'margin-top:8px',textContent:'Tip: pick a calm, one-person-talking part of the interview, then tap lines in the transcript. Interviews vary, so preview before you start.'}));
+}
+$('acAm').onclick=()=>{pick.ac='american';pick.who=null;$('vids').innerHTML='';renderPeople();};
+$('acBr').onclick=()=>{pick.ac='british';pick.who=null;$('vids').innerHTML='';renderPeople();};
+$('gM').onclick=()=>{pick.g='male';pick.who=null;$('vids').innerHTML='';renderPeople();};
+$('gF').onclick=()=>{pick.g='female';pick.who=null;$('vids').innerHTML='';renderPeople();};
+
+/* ---------- misc init ---------- */
+[$('focus'),$('aFocus')].forEach(sel=>FOCI.forEach(f=>sel.append(h('option',{value:f,textContent:f}))));
+$('focus').onchange=e=>{S.focus=e.target.value;renderGuide();};
+
+document.addEventListener('keydown',e=>{
+  if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+  if(e.code==='Space'&&S.active>=0){e.preventDefault();playOrig();}
+  if(e.key==='r'&&S.active>=0) toggleRec();
+});
+
+(async function init(){
+  await DB.init(); updStats(); renderPeople(); renderPractice();
+  const m=location.hash.match(/^#a=(.+)$/);
+  if(m) loadAssignment(m[1]);
+})();
+})();
+</script>
+<script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
